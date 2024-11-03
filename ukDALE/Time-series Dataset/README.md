@@ -4,6 +4,13 @@
 
 This folder contains the extracted CSV files from the UK-DALE dataset, which is a well-known dataset for energy consumption analysis in residential buildings. The dataset includes detailed power consumption readings from multiple appliances across various households. The UK-DALE dataset is useful for research in the areas of energy disaggregation, appliance recognition, and smart grid technologies.
 
+### Provided Data
+
+In this folder, data has been provided for **House 3**. Due to size constraints, detailed datasets for other houses cannot be included. If you require the complete datasets for additional houses, please contact me via email.
+
+**Contact Information**:  
+Email: [jangirpoorab@gmail.com](mailto:jangirpoorab@gmail.com)
+
 ## Dataset Format
 
 Each CSV file in this folder corresponds to an electricity meter reading for a specific household. The dataset consists of the following components:
@@ -46,3 +53,4 @@ Each CSV file in this folder corresponds to an electricity meter reading for a s
 
 - Ensure that the required libraries (e.g., Pandas, NumPy) are installed to read and process the CSV files.
 - The dataset is suitable for various machine learning and data analysis tasks, including classification, regression, and time-series analysis.
+
