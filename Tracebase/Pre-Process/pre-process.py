@@ -21,8 +21,7 @@ def load_tracebase_data(directory_path):
                     data = pd.read_csv(file_path, delimiter=';', header=None)
                     data.columns = ['Timestamp', 'Power_1s', 'Power_8s']
                     data['Power'] = data['Power_1s']
-                    #data['Timestamp'] = pd.to_datetime(data['Timestamp'],format='mixed') #, format='%d/%m/%Y %H:%M:%S'
-                    data['Timestamp'] = pd.to_datetime(data['Timestamp'],format='mixed', errors='coerce')
+                    data['Timestamp'] = pd.to_datetime(data['Timestamp'], format='%d/%m/%Y %H:%M:%S')
                     data = data.sort_values(by='Timestamp')
                     
                     if not data.empty:
@@ -33,8 +32,6 @@ def load_tracebase_data(directory_path):
 
 def identify_switch_points(data):
     switch_points = []
-    
-    
     for t in range(1, len(data)):
         delta = abs(data['Power'].iloc[t] - data['Power'].iloc[t - 1])
         delta_r = delta / data['Power'].iloc[t] if data['Power'].iloc[t] != 0 else 0
@@ -47,46 +44,46 @@ def identify_switch_points(data):
 def extract_steady_period(data, start_index):
     m = 0
     while start_index + m + 1 < len(data) - 1:
-        # Calculate delta_r for the period after the switch point
         current_power = data['Power'].iloc[start_index + m]
         next_power = data['Power'].iloc[start_index + m + 1]
         
-        # Handle division by zero by skipping or setting delta_r to 0
         if next_power != 0:
             delta_r = abs(next_power - current_power) / next_power
         else:
-            delta_r = 0  # If next_power is zero, set delta_r to zero to continue checking
+            delta_r = 0
         
-        # Check if the relative change exceeds the threshold
         if delta_r >= phi2:
             break
         m += 1
     
     return m
 
-def extract_appliance_footprints(data, switch_points):
+def extract_appliance_footprints(data, switch_points, target_length):
     footprints = []
     
     for t in switch_points:
         m = extract_steady_period(data, t)
-        #print(m)
         if m > 0 and t + m < len(data) and data['Power'].iloc[t] - data['Power'].iloc[t + m] < 0:
             footprint = np.diff(data['Power'].iloc[t:t + m + 1].values)
-            #print(footprint)
+            
+            # Padding to make the footprint uniform
+            if len(footprint) < target_length:
+                footprint = np.pad(footprint, (0, target_length - len(footprint)), 'constant')
+            else:
+                footprint = footprint[:target_length]  # Truncate if longer
+            
             footprints.append(footprint)
-    #print(footprints)
+    
     return footprints
 
-def preprocess_tracebase_data(directory_path):
+def preprocess_tracebase_data(directory_path, target_length):
     all_data, labels = load_tracebase_data(directory_path)
     dataset_X = []
     dataset_Y = []
     
     for i, (data, label) in enumerate(zip(all_data, labels)):
-        #print(f"Processing appliance {label} with {len(data)} data points (#{i + 1}/{len(all_data)})...")
         switch_points = identify_switch_points(data)
-        #print(switch_points)
-        footprints = extract_appliance_footprints(data, switch_points)
+        footprints = extract_appliance_footprints(data, switch_points, target_length)
         
         for footprint in footprints:
             dataset_X.append(footprint)
@@ -99,13 +96,14 @@ def preprocess_tracebase_data(directory_path):
     return df
 
 # Example usage
-directory_path = r'C:\Users\niles\OneDrive\Desktop\tracebase\australia'
+directory_path = r'C:\Users\niles\OneDrive\Desktop\tracebase\incomplete'
+target_length = 100  # Define your target length for uniformity
 
 print(f"Loading data from: {directory_path}")
-df = preprocess_tracebase_data(directory_path)
+df = preprocess_tracebase_data(directory_path, target_length)
 
 if not df.empty:
-    output_file = 'processed_dataset2.csv'
+    output_file = 'processed_dataset1.csv'
     df.to_csv(output_file, index=False)
     print(f"Processed data saved to {output_file}")
 else:
